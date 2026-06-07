@@ -741,22 +741,24 @@ Return a list of line overlays used."
         (lambda (ref-changes)
           (when (buffer-live-p orig)
             (let ((ref-changes (diff-hl-adjust-changes ref-changes changes))
-                  (base (diff-hl--target-buffer orig)))
+                  (base (diff-hl--target-buffer orig))
+                  (has-changes (or changes ref-changes)))
               (dolist (buf (buffer-list))
-                (when (and (buffer-live-p buf)
-                           (eq (diff-hl--target-buffer buf) base)
+                (when (and (eq (diff-hl--target-buffer buf) base)
                            (buffer-local-value 'diff-hl-mode buf))
                   (with-current-buffer buf
+                    (diff-hl-remove-overlays)
                     (let (reuse)
-                      (diff-hl-remove-overlays)
-                      (let ((diff-hl-highlight-function
-                             diff-hl-highlight-reference-function)
-                            (diff-hl-fringe-face-function
-                             diff-hl-fringe-reference-face-function))
-                        (setq reuse (diff-hl--update-overlays ref-changes nil)))
-                      (diff-hl--update-overlays changes reuse)
-                      (when (not (or changes ref-changes))
-                        (diff-hl--autohide-margin))))))))))))))
+                      (when ref-changes
+                        (let ((diff-hl-highlight-function
+                               diff-hl-highlight-reference-function)
+                              (diff-hl-fringe-face-function
+                               diff-hl-fringe-reference-face-function))
+                          (setq reuse (diff-hl--update-overlays ref-changes nil))))
+                      (when changes
+                        (diff-hl--update-overlays changes reuse)))
+                    (unless has-changes
+                      (diff-hl--autohide-margin)))))))))))))
 
 (defun diff-hl--resolve (value-or-buffer cb)
   (if (listp value-or-buffer)
@@ -1701,8 +1703,8 @@ effect."
       (unless current-prefix-arg
         (message "Set global reference revision to %s" rev))
       (dolist (buf (buffer-list))
-        (with-current-buffer buf
-          (when diff-hl-mode
+        (when (buffer-local-value 'diff-hl-mode buf)
+          (with-current-buffer buf
             (when (bound-and-true-p diff-hl-amend-mode)
               (diff-hl-amend-mode -1))
             (when (not (local-variable-p 'diff-hl-reference-revision))
@@ -1786,8 +1788,8 @@ per-project reference created by `diff-hl-set-reference-rev-in-project'."
     ;; reset all cache
     (setq diff-hl-reference-revision-projects-cache nil))
   (dolist (buf (buffer-list))
-    (with-current-buffer buf
-      (when diff-hl-mode
+    (when (buffer-local-value 'diff-hl-mode buf)
+      (with-current-buffer buf
         (when arg
           ;; reset value in buffers
           (kill-local-variable 'diff-hl-reference-revision))
