@@ -1446,27 +1446,26 @@ The value of this variable is a mode line template as in
            (unmodified-states '(up-to-date ignored unregistered))
            file)
       (dolist (buf (buffer-list))
-        (setq file (diff-hl--buffer-file-name buf))
-        (when (and
-               (buffer-local-value 'diff-hl-mode buf)
-               (not (buffer-modified-p buf))
-               ;; Solve the "cloned indirect buffer" problem
-               ;; (diff-hl-mode could be non-nil there, even if
-               ;; buffer-file-name is nil):
-               file
-               (file-in-directory-p file topdir)
-               (file-exists-p file))
-          (with-current-buffer buf
-            (let* ((backend (vc-backend file)))
-              (when backend
-                (cond
-                 ((member (file-relative-name file topdir) modified-files)
-                  (when (memq (vc-state file) unmodified-states)
-                    (vc-state-refresh file backend))
-                  (diff-hl-update))
-                 ((not (memq (vc-state file backend) unmodified-states))
-                  (vc-state-refresh file backend)
-                  (diff-hl-update)))))))))))
+        (when (and (buffer-local-value 'diff-hl-mode buf)
+                   (not (buffer-modified-p buf)))
+          (setq file (diff-hl--buffer-file-name buf))
+          (when (and file
+                     ;; Solve the "cloned indirect buffer" problem
+                     ;; (diff-hl-mode could be non-nil there, even if
+                     ;; buffer-file-name is nil):
+                     (file-in-directory-p file topdir)
+                     (file-exists-p file))
+            (with-current-buffer buf
+              (let* ((backend (vc-backend file)))
+                (when backend
+                  (cond
+                   ((member (file-relative-name file topdir) modified-files)
+                    (when (memq (vc-state file) unmodified-states)
+                      (vc-state-refresh file backend))
+                    (diff-hl-update))
+                   ((not (memq (vc-state file backend) unmodified-states))
+                    (vc-state-refresh file backend)
+                    (diff-hl-update))))))))))))
 
 (defun diff-hl-dir-update ()
   (dolist (pair (if (vc-dir-marked-files)
@@ -1832,8 +1831,8 @@ PROJ defaults to the current project."
 (defun diff-hl-global-mode-change ()
   (unless global-diff-hl-mode
     (dolist (buf (buffer-list))
-      (with-current-buffer buf
-        (when diff-hl-dir-mode
+      (when (buffer-local-value 'diff-hl-dir-mode buf)
+        (with-current-buffer buf
           (diff-hl-dir-mode -1))))))
 
 (provide 'diff-hl)
