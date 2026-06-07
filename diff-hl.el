@@ -228,7 +228,7 @@ the end position as its only argument."
                  (const :tag "Narrow to the hunk"
                         diff-hl-revert-narrow-to-hunk)))
 
-(defcustom diff-hl-global-modes '(not image-mode)
+(defcustom diff-hl-global-modes '(not pdf-view-mode image-mode)
   "Modes for which `diff-hl-mode' is automagically turned on.
 This affects the behavior of `global-diff-hl-mode'.
 If nil, no modes have `diff-hl-mode' automatically turned on.
