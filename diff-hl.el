@@ -499,23 +499,22 @@ BUFFER defaults to the current buffer."
          (backend (vc-backend file))
          (hide-staged (and (eq backend 'Git) (not diff-hl-show-staged-changes))))
     (when backend
-      (let ((state (vc-state file backend))
-            ;; Workaround for debbugs#78946 for the `thread' async update method.
-            ;; This is fiddly, but we basically allow the thread to start, while
-            ;; prohibiting the async process call inside.
-            ;; That still makes it partially async on macOS.
-            ;; Or just use "simple async" if your Emacs is new enough.
-            (diff-hl-update-async (or (and (eq diff-hl-update-async 'thread)
-                                           (not (eq window-system 'ns)))
-                                      (eq diff-hl-update-async t))))
+      (let* ((state (vc-state file backend))
+             ;; Workaround for debbugs#78946 for the `thread' async update method.
+             ;; This is fiddly, but we basically allow the thread to start, while
+             ;; prohibiting the async process call inside.
+             ;; That still makes it partially async on macOS.
+             ;; Or just use "simple async" if your Emacs is new enough.
+             (diff-hl-update-async (or (and (eq diff-hl-update-async 'thread)
+                                            (not (eq window-system 'ns)))
+                                       (eq diff-hl-update-async t)))
+             (modified (diff-hl-modified-p state)))
         (cond
-         ((and
-           (not diff-hl-highlight-reference-function)
-           (diff-hl-modified-p state))
+         ((and (not diff-hl-highlight-reference-function)
+               modified)
           `((:working . ,(diff-hl-changes-buffer file backend))))
-         ((or
-           diff-hl-reference-revision
-           (diff-hl-modified-p state))
+         ((or diff-hl-reference-revision
+              modified)
           (let* ((ref-changes
                   (and (or diff-hl-reference-revision
                            hide-staged)
