@@ -1709,8 +1709,9 @@ effect."
           (when diff-hl-mode
             (when (bound-and-true-p diff-hl-amend-mode)
               (diff-hl-amend-mode -1))
-            (when (not (local-variable-p 'diff-hl-reference-revision))
-              (diff-hl-update))))))))
+            (diff-hl-update))
+          (when diff-hl-dir-mode
+            (diff-hl-dir-update)))))))
 
 ;;;###autoload
 (defun diff-hl-set-reference-rev-in-project (rev)
@@ -1780,7 +1781,10 @@ effect."
           (when (bound-and-true-p diff-hl-amend-mode)
             (diff-hl-amend-mode -1))
           (setq-local diff-hl-reference-revision rev)
-          (diff-hl-update))))))
+          (diff-hl-update))
+        (when diff-hl-dir-mode
+          (setq-local diff-hl-reference-revision rev)
+          (diff-hl-dir-update))))))
 
 ;;;###autoload
 (defun diff-hl-reset-reference-rev (&optional arg)
@@ -1805,8 +1809,11 @@ per-project reference created by `diff-hl-set-reference-rev-in-project'."
         ;; `diff-hl-set-reference-rev-in-project' ), when called without a
         ;; prefix.
         (unless (local-variable-p 'diff-hl-reference-revision)
-          (diff-hl-update)))))
-  (message "Reference revision reset globally to the most recent revision"))
+          (diff-hl-update)))
+      (when diff-hl-dir-mode
+        (unless (local-variable-p 'diff-hl-reference-revision)
+          (diff-hl-dir-update))))))
+  (message "Reference revision reset globally to the most recent revision")
 
 (defun diff-hl-reset-reference-rev-in-project (&optional proj)
   "Reset the reference revision in the project PROJ to the
@@ -1827,7 +1834,10 @@ PROJ defaults to the current project."
           (when (bound-and-true-p diff-hl-amend-mode)
             (diff-hl-amend-mode -1))
           (kill-local-variable 'diff-hl-reference-revision)
-          (diff-hl-update))))
+          (diff-hl-update))
+        (when diff-hl-dir-mode
+          (kill-local-variable 'diff-hl-reference-revision)
+          (diff-hl-dir-update))))
     (message "Reference revision reset to the global value (project %s)"
              (project-name proj))))
 
